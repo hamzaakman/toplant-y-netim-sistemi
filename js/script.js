@@ -1,101 +1,24 @@
-// Toplantı Yönetim Sistemi - Ana Sayfa JavaScript
+// Toplantı Yönetim Sistemi Ana JavaScript
 
-let existingParticipants = [];
 let newEmails = [];
+let existingParticipants = [];
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Event listeners
+    document.getElementById('meetingForm').addEventListener('submit', handleFormSubmit);
+    document.getElementById('newParticipantEmail').addEventListener('keypress', handleEmailKeypress);
+    document.getElementById('addEmailBtn').addEventListener('click', addNewEmail);
+    document.getElementById('addSelectedBtn').addEventListener('click', addSelectedParticipants);
+    document.getElementById('existingParticipants').addEventListener('change', handleParticipantSelection);
+    
+    // Hızlı e-posta kartlarını ayarla
+    setupQuickEmailCards();
+    
     // Mevcut katılımcıları yükle
     loadExistingParticipants();
-    
-    // Event listeners
-    document.getElementById('addEmailBtn').addEventListener('click', addNewEmail);
-    document.getElementById('cancelBtn').addEventListener('click', resetForm);
-    document.getElementById('meetingForm').addEventListener('submit', handleFormSubmit);
-    
-    // Arama input event listener
-    const searchInput = document.getElementById('participantSearch');
-    if (searchInput) {
-        searchInput.addEventListener('input', debounce(filterParticipants, 300));
-    }
 });
 
-// Mevcut katılımcıları yükle
-async function loadExistingParticipants() {
-    try {
-        const response = await fetch('php/get_participants.php');
-        const result = await response.json();
-        
-        if (result.success) {
-            existingParticipants = result.data;
-            displayExistingParticipants(existingParticipants);
-        } else {
-            console.error('Katılımcılar yüklenemedi:', result.error);
-            showNotification('Katılımcılar yüklenirken hata oluştu', 'error');
-        }
-    } catch (error) {
-        console.error('Katılımcı yükleme hatası:', error);
-        showNotification('Katılımcılar yüklenirken hata oluştu', 'error');
-    }
-}
-
-// Mevcut katılımcıları görüntüle
-function displayExistingParticipants(participants) {
-    const select = document.getElementById('existingParticipants');
-    
-    // Select'i temizle ve yeni seçenekler ekle
-    select.innerHTML = '';
-    
-    if (participants.length === 0) {
-        const option = document.createElement('option');
-        option.value = '';
-        option.textContent = 'Henüz katılımcı bulunmuyor';
-        option.disabled = true;
-        select.appendChild(option);
-    } else {
-        participants.forEach(participant => {
-            const option = document.createElement('option');
-            option.value = participant.katilimci_id;
-            option.textContent = `${participant.ad_soyad} (${participant.e_posta}) - ${participant.departman || 'Departman belirtilmemiş'}`;
-            select.appendChild(option);
-        });
-    }
-    
-    // Katılımcı sayısını göster
-    const countSpan = document.getElementById('participantCount');
-    if (countSpan) {
-        countSpan.textContent = `${participants.length} katılımcı bulundu`;
-    }
-}
-
-// Katılımcıları filtrele
-function filterParticipants() {
-    const searchTerm = document.getElementById('participantSearch').value.toLowerCase();
-    
-    if (!searchTerm) {
-        displayExistingParticipants(existingParticipants);
-        return;
-    }
-    
-    const filtered = existingParticipants.filter(participant => 
-        participant.ad_soyad.toLowerCase().includes(searchTerm) ||
-        participant.e_posta.toLowerCase().includes(searchTerm) ||
-        (participant.departman && participant.departman.toLowerCase().includes(searchTerm))
-    );
-    
-    displayExistingParticipants(filtered);
-    
-    // Filtrelenmiş sonuç sayısını güncelle
-    const countSpan = document.getElementById('participantCount');
-    if (countSpan) {
-        if (searchTerm) {
-            countSpan.textContent = `${filtered.length} katılımcı bulundu (${existingParticipants.length} toplam)`;
-        } else {
-            countSpan.textContent = `${filtered.length} katılımcı bulundu`;
-        }
-    }
-}
-
-// Yeni e-posta ekle
+// E-posta ekleme
 function addNewEmail() {
     const emailInput = document.getElementById('newParticipantEmail');
     const email = emailInput.value.trim();
@@ -110,57 +33,193 @@ function addNewEmail() {
         return;
     }
     
-    if (newEmails.includes(email)) {
-        showNotification('Bu e-posta zaten eklenmiş', 'warning');
+    // E-posta zaten eklenmiş mi kontrol et
+    if (newEmails.some(e => e.email === email)) {
+        showNotification('Bu e-posta adresi zaten eklenmiş', 'warning');
         return;
     }
     
-    // Mevcut katılımcılarda kontrol et
-    const existingParticipant = existingParticipants.find(p => p.e_posta === email);
-    if (existingParticipant) {
-        showNotification('Bu e-posta zaten mevcut katılımcılarda bulunuyor', 'info');
-        return;
-    }
+    // E-posta adresinden isim oluştur
+    const formattedName = formatNameFromEmail(email);
     
-    newEmails.push(email);
+    // Yeni e-postayı ekle
+    newEmails.push({
+        email: email,
+        name: formattedName,
+        isExisting: false
+    });
+    
+    // E-posta listesini güncelle
     displayNewEmails();
+    
+    // Input'u temizle
     emailInput.value = '';
     
-    showNotification('E-posta eklendi', 'success');
+    showNotification('E-posta adresi eklendi', 'success');
 }
 
-// Yeni e-postaları görüntüle
+// E-posta adresinden isim oluştur
+function formatNameFromEmail(email) {
+    const username = email.split('@')[0];
+    
+    // Yaygın ayırıcıları kullanarak kelimeleri ayır
+    const words = username.split(/[._-]/);
+    
+    // Her kelimenin ilk harfini büyük yap
+    const formattedWords = words.map(word => {
+        if (word.length > 0) {
+            return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+        }
+        return word;
+    });
+    
+    return formattedWords.join(' ');
+}
+
+// E-posta validasyonu
+function isValidEmail(email) {
+    // Basit ama etkili e-posta validasyonu
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    
+    if (!emailRegex.test(email)) {
+        return false;
+    }
+    
+    const [localPart, domain] = email.split('@');
+    
+    // Local part kontrolü
+    if (localPart.length < 1 || localPart.length > 64) {
+        return false;
+    }
+    
+    // Domain kontrolü
+    if (domain.length < 3 || domain.length > 253) {
+        return false;
+    }
+    
+    // TLD kontrolü
+    const domainParts = domain.split('.');
+    if (domainParts.length < 2) {
+        return false;
+    }
+    
+    const tld = domainParts[domainParts.length - 1];
+    if (tld.length < 2 || tld.length > 6) {
+        return false;
+    }
+    
+    return true;
+}
+
+// E-posta listesini görüntüle
 function displayNewEmails() {
-    const emailsList = document.getElementById('newEmailsList');
+    const emailList = document.getElementById('newEmailsList');
     
     if (newEmails.length === 0) {
-        emailsList.innerHTML = '<p class="no-emails">Henüz yeni e-posta eklenmedi</p>';
+        emailList.innerHTML = '<p class="no-emails">Henüz e-posta eklenmedi</p>';
         return;
     }
     
-    const emailsHTML = newEmails.map(email => `
+    const emailHTML = newEmails.map(email => `
         <div class="email-tag">
-            <span>${email}</span>
-            <button type="button" class="remove-email" onclick="removeEmail('${email}')">
+            <span class="email-name">${email.name}</span>
+            <button type="button" class="remove-email" onclick="removeEmail('${email.email}')">
                 <i class="fas fa-times"></i>
             </button>
         </div>
     `).join('');
     
-    emailsList.innerHTML = emailsHTML;
+    emailList.innerHTML = emailHTML;
 }
 
 // E-posta kaldır
-function removeEmail(email) {
-    newEmails = newEmails.filter(e => e !== email);
+function removeEmail(emailToRemove) {
+    newEmails = newEmails.filter(email => email.email !== emailToRemove);
     displayNewEmails();
-    showNotification('E-posta kaldırıldı', 'info');
 }
 
-// E-posta validasyonu
-function isValidEmail(email) {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
+// E-posta input keypress handler
+function handleEmailKeypress(event) {
+    if (event.key === 'Enter') {
+        event.preventDefault();
+        addNewEmail();
+    }
+}
+
+// Mevcut katılımcıları yükle
+async function loadExistingParticipants() {
+    const participantsList = document.getElementById('existingParticipants');
+    
+    try {
+        const response = await fetch('php/get_participants.php');
+        const result = await response.json();
+        
+        if (result.success) {
+            existingParticipants = result.data;
+            displayExistingParticipants();
+        } else {
+            console.error('Katılımcılar yüklenemedi:', result.error);
+        }
+    } catch (error) {
+        console.error('Katılımcı yükleme hatası:', error);
+    }
+}
+
+// Mevcut katılımcıları görüntüle
+function displayExistingParticipants() {
+    const participantsList = document.getElementById('existingParticipants');
+    
+    if (existingParticipants.length === 0) {
+        participantsList.innerHTML = '<option value="">Katılımcı bulunamadı</option>';
+        return;
+    }
+    
+    const optionsHTML = existingParticipants.map(participant => {
+        const formattedName = formatNameFromEmail(participant.e_posta);
+        return `<option value="${participant.katilimci_id}">${formattedName} (${participant.e_posta})</option>`;
+    }).join('');
+    
+    participantsList.innerHTML = optionsHTML;
+}
+
+// Katılımcı seçimi handler
+function handleParticipantSelection(event) {
+    // Bu fonksiyon gerekirse eklenebilir
+}
+
+// Seçilen katılımcıları ekle
+function addSelectedParticipants() {
+    const selectElement = document.getElementById('existingParticipants');
+    const selectedOptions = Array.from(selectElement.selectedOptions);
+    
+    if (selectedOptions.length === 0) {
+        showNotification('Lütfen en az bir katılımcı seçin', 'warning');
+        return;
+    }
+    
+    selectedOptions.forEach(option => {
+        const participantId = option.value;
+        const participant = existingParticipants.find(p => p.katilimci_id == participantId);
+        
+        if (participant && !newEmails.some(e => e.email === participant.e_posta)) {
+            const formattedName = formatNameFromEmail(participant.e_posta);
+            
+            newEmails.push({
+                email: participant.e_posta,
+                name: formattedName,
+                isExisting: true,
+                participantId: participant.katilimci_id
+            });
+        }
+    });
+    
+    // E-posta listesini güncelle
+    displayNewEmails();
+    
+    // Seçimleri temizle
+    selectElement.selectedIndex = -1;
+    
+    showNotification(`${selectedOptions.length} katılımcı eklendi`, 'success');
 }
 
 // Form gönderimi
@@ -176,7 +235,7 @@ async function handleFormSubmit(event) {
     
     // Yeni e-postaları ekle
     newEmails.forEach(email => {
-        formData.append('newEmails[]', email);
+        formData.append('newEmails[]', email.email);
     });
     
     // Seçili mevcut katılımcıları ekle
@@ -184,10 +243,13 @@ async function handleFormSubmit(event) {
         formData.append('existingParticipants[]', id);
     });
     
+    let submitBtn = null;
+    let originalText = '';
+    
     try {
         // Loading göster
-        const submitBtn = event.target.querySelector('button[type="submit"]');
-        const originalText = submitBtn.innerHTML;
+        submitBtn = event.target.querySelector('button[type="submit"]');
+        originalText = submitBtn.innerHTML;
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Gönderiliyor...';
         submitBtn.disabled = true;
         
@@ -202,9 +264,9 @@ async function handleFormSubmit(event) {
             showNotification('Toplantı başarıyla oluşturuldu!', 'success');
             resetForm();
             
-            // 3 saniye sonra toplantı listesi sayfasına yönlendir
+            // 3 saniye sonra toplantı listesi sayfasına yönlendir ve yenile
             setTimeout(() => {
-                window.location.href = 'meetings.html';
+                window.location.href = 'meetings.html?refresh=true';
             }, 3000);
         } else {
             showNotification(result.message || 'Toplantı oluşturulamadı', 'error');
@@ -215,9 +277,10 @@ async function handleFormSubmit(event) {
         showNotification('Toplantı oluşturulurken bir hata oluştu', 'error');
     } finally {
         // Loading'i kaldır
-        const submitBtn = event.target.querySelector('button[type="submit"]');
-        submitBtn.innerHTML = originalText;
-        submitBtn.disabled = false;
+        if (submitBtn) {
+            submitBtn.innerHTML = originalText;
+            submitBtn.disabled = false;
+        }
     }
 }
 
@@ -281,4 +344,34 @@ function getNotificationIcon(type) {
         info: 'info-circle'
     };
     return icons[type] || 'info-circle';
+}
+
+// Hızlı e-posta kartlarını ayarla
+function setupQuickEmailCards() {
+    const emailCards = document.querySelectorAll('.email-provider-card');
+    
+    emailCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const domain = this.getAttribute('data-domain');
+            const emailInput = document.getElementById('newParticipantEmail');
+            
+            // Eğer input'ta sadece kullanıcı adı varsa, domain'i ekle
+            const currentValue = emailInput.value.trim();
+            if (currentValue && !currentValue.includes('@')) {
+                emailInput.value = currentValue + domain;
+            } else if (!currentValue) {
+                // Input boşsa, sadece domain'i ekle
+                emailInput.value = domain;
+            }
+            
+            // Input'a focus ol
+            emailInput.focus();
+            
+            // Kart'a tıklama animasyonu
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
+    });
 }

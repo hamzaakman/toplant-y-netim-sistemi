@@ -21,6 +21,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // İlk yükleme
     loadParticipants();
+    
+    // Hızlı e-posta kartları event listener'ları
+    setupQuickEmailCards();
 });
 
 // Katılımcıları yükle
@@ -104,7 +107,7 @@ function createParticipantCard(participant) {
         new Date(participant.son_topanti).toLocaleDateString('tr-TR') : 'Henüz toplantı yok';
     
     return `
-        <div class="participant-card" data-participant-id="${participant.id}">
+        <div class="participant-card" data-participant-id="${participant.katilimci_id}">
             <div class="participant-header">
                 <div class="participant-info">
                     <h3 class="participant-name">${participant.ad_soyad}</h3>
@@ -140,13 +143,13 @@ function createParticipantCard(participant) {
             </div>
             
             <div class="participant-actions">
-                <button class="btn-view" onclick="viewParticipant(${participant.id})">
+                <button class="btn-view" onclick="viewParticipant(${participant.katilimci_id})">
                     <i class="fas fa-eye"></i> Görüntüle
                 </button>
-                <button class="btn-edit" onclick="editParticipant(${participant.id})">
+                <button class="btn-edit" onclick="editParticipant(${participant.katilimci_id})">
                     <i class="fas fa-edit"></i> Düzenle
                 </button>
-                <button class="btn-delete" onclick="deleteParticipant(${participant.id})">
+                <button class="btn-delete" onclick="deleteParticipant(${participant.katilimci_id})">
                     <i class="fas fa-trash"></i> Sil
                 </button>
             </div>
@@ -285,7 +288,7 @@ function closeDeleteModal() {
 
 // Katılımcı görüntüle
 function viewParticipant(participantId) {
-    const participant = currentParticipants.find(p => p.id === participantId);
+    const participant = currentParticipants.find(p => p.katilimci_id == participantId);
     if (!participant) return;
     
     currentParticipantId = participantId;
@@ -342,13 +345,13 @@ function viewParticipant(participantId) {
 
 // Katılımcı düzenle
 function editParticipant(participantId) {
-    const participant = currentParticipants.find(p => p.id === participantId);
+    const participant = currentParticipants.find(p => p.katilimci_id == participantId);
     if (!participant) return;
     
     currentParticipantId = participantId;
     
     // Form alanlarını doldur
-    document.getElementById('editParticipantId').value = participant.id;
+    document.getElementById('editParticipantId').value = participant.katilimci_id;
     document.getElementById('editParticipantName').value = participant.ad_soyad;
     document.getElementById('editParticipantEmail').value = participant.e_posta;
     document.getElementById('editParticipantPhone').value = participant.telefon;
@@ -405,6 +408,9 @@ async function saveNewParticipant() {
             // Modal'ı kapat
             closeAddModal();
             
+            // Form'u temizle
+            form.reset();
+            
             showNotification('Katılımcı başarıyla eklendi ve veritabanına kaydedildi.', 'success');
         } else {
             showNotification('Hata: ' + result.error, 'error');
@@ -418,7 +424,7 @@ async function saveNewParticipant() {
 
 // Katılımcı değişikliklerini kaydet
 function saveParticipantChanges() {
-    const participant = currentParticipants.find(p => p.id === currentParticipantId);
+    const participant = currentParticipants.find(p => p.katilimci_id == currentParticipantId);
     if (!participant) return;
     
     // Form verilerini al
@@ -440,7 +446,7 @@ function saveParticipantChanges() {
     }
     
     // Katılımcıyı güncelle
-    const index = currentParticipants.findIndex(p => p.id === currentParticipantId);
+    const index = currentParticipants.findIndex(p => p.katilimci_id == currentParticipantId);
     currentParticipants[index] = updatedParticipant;
     
     // Listeyi yenile
@@ -454,7 +460,7 @@ function saveParticipantChanges() {
 
 // Katılımcı sil
 function deleteParticipant(participantId) {
-    const participant = currentParticipants.find(p => p.id === participantId);
+    const participant = currentParticipants.find(p => p.katilimci_id == participantId);
     if (!participant) return;
     
     currentParticipantId = participantId;
@@ -467,7 +473,7 @@ function deleteParticipant(participantId) {
 // Silme işlemini onayla
 function confirmDeleteParticipant() {
     // Katılımcıyı listeden kaldır
-    currentParticipants = currentParticipants.filter(p => p.id !== currentParticipantId);
+    currentParticipants = currentParticipants.filter(p => p.katilimci_id != currentParticipantId);
     
     // Listeyi yenile
     displayParticipants();
@@ -539,5 +545,41 @@ window.onclick = function(event) {
         if (event.target === modal) {
             modal.style.display = 'none';
         }
+    });
+}
+
+// Event listener'ları ekle
+function addParticipantCardListeners() {
+    // Bu fonksiyon şu anda boş, gerekirse gelecekte eklenebilir
+    console.log('Event listener\'lar eklendi');
+}
+
+// Hızlı e-posta kartlarını ayarla
+function setupQuickEmailCards() {
+    const emailCards = document.querySelectorAll('.email-provider-card');
+    
+    emailCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const domain = this.getAttribute('data-domain');
+            const emailInput = document.getElementById('addParticipantEmail');
+            
+            // Eğer input'ta sadece kullanıcı adı varsa, domain'i ekle
+            const currentValue = emailInput.value.trim();
+            if (currentValue && !currentValue.includes('@')) {
+                emailInput.value = currentValue + domain;
+            } else if (!currentValue) {
+                // Input boşsa, sadece domain'i ekle
+                emailInput.value = domain;
+            }
+            
+            // Input'a focus ol
+            emailInput.focus();
+            
+            // Kart'a tıklama animasyonu
+            this.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                this.style.transform = '';
+            }, 150);
+        });
     });
 }

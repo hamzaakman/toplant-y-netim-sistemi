@@ -20,11 +20,32 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // İlk yükleme
     loadMeetings();
+    
+    // URL'de refresh parametresi varsa otomatik yenile
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('refresh') === 'true') {
+        // URL'den parametreyi temizle
+        window.history.replaceState({}, document.title, window.location.pathname);
+        
+        // 1 saniye sonra yenile (sayfa tam yüklensin)
+        setTimeout(() => {
+            loadMeetings();
+            showNotification('Toplantı listesi yenilendi', 'success');
+        }, 1000);
+    }
 });
 
 // Toplantıları yükle
-function loadMeetings() {
+async function loadMeetings() {
+    console.log('loadMeetings() fonksiyonu başladı');
+    
     const meetingsList = document.getElementById('meetingsList');
+    console.log('meetingsList elementi:', meetingsList);
+    
+    if (!meetingsList) {
+        console.error('meetingsList elementi bulunamadı!');
+        return;
+    }
     
     // Loading göster
     meetingsList.innerHTML = `
@@ -34,46 +55,35 @@ function loadMeetings() {
         </div>
     `;
     
-    // Gerçek veritabanından yüklenecek (şimdilik boş)
-    currentMeetings = [];
-    displayMeetings();
-}
-
-// Demo toplantı verileri oluştur
-function generateDemoMeetings() {
-    const statuses = ['planlandi', 'devam_ediyor', 'tamamlandi', 'iptal_edildi'];
-    const locations = ['Toplantı Odası A', 'Toplantı Odası B', 'Konferans Salonu', 'Online'];
-    const names = [
-        'Proje Planlama Toplantısı',
-        'Haftalık Değerlendirme',
-        'Müşteri Sunumu',
-        'Ekip Koordinasyonu',
-        'Strateji Belirleme',
-        'Kalite Kontrol',
-        'Yenilikçilik Çalıştayı',
-        'Performans Değerlendirmesi'
-    ];
-    
-    const meetings = [];
-    
-    for (let i = 1; i <= 25; i++) {
-        const date = new Date();
-        date.setDate(date.getDate() + Math.floor(Math.random() * 30));
+    try {
+        console.log('API çağrısı yapılıyor: php/get_meetings.php');
+        const response = await fetch('php/get_meetings.php');
+        console.log('API yanıtı:', response);
         
-        meetings.push({
-            id: i,
-            name: names[Math.floor(Math.random() * names.length)],
-            date: date.toISOString().split('T')[0],
-            time: `${String(Math.floor(Math.random() * 24)).padStart(2, '0')}:${String(Math.floor(Math.random() * 60)).padStart(2, '0')}`,
-            location: locations[Math.floor(Math.random() * locations.length)],
-            status: statuses[Math.floor(Math.random() * statuses.length)],
-            description: `Bu toplantı ${names[Math.floor(Math.random() * names.length)].toLowerCase()} ile ilgilidir.`,
-            participants: Math.floor(Math.random() * 8) + 2,
-            created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString()
-        });
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('API sonucu:', result);
+        
+        if (result.success) {
+            currentMeetings = result.data;
+            console.log('Toplantılar yüklendi:', currentMeetings);
+            displayMeetings();
+            showNotification(`${currentMeetings.length} toplantı yüklendi`, 'success');
+        } else {
+            console.error('Toplantılar yüklenemedi:', result.error);
+            showNotification('Toplantılar yüklenirken hata oluştu', 'error');
+            currentMeetings = [];
+            displayMeetings();
+        }
+    } catch (error) {
+        console.error('Toplantı yükleme hatası:', error);
+        showNotification('Toplantılar yüklenirken hata oluştu', 'error');
+        currentMeetings = [];
+        displayMeetings();
     }
-    
-    return meetings.sort((a, b) => new Date(a.date) - new Date(b.date));
 }
 
 // Toplantıları görüntüle
@@ -113,14 +123,14 @@ function displayMeetings() {
 
 // Toplantı kartı oluştur
 function createMeetingCard(meeting) {
+    const formattedDate = formatDate(meeting.date);
     const statusText = getStatusText(meeting.status);
     const statusClass = `status-${meeting.status}`;
-    const formattedDate = formatDate(meeting.date);
     
     return `
-        <div class="meeting-card" data-meeting-id="${meeting.id}">
+        <div class="meeting-card ${statusClass}" data-meeting-id="${meeting.id}">
             <div class="meeting-header">
-                <h3 class="meeting-title">${meeting.name}</h3>
+                <h3 class="meeting-title">${meeting.title}</h3>
                 <span class="meeting-status ${statusClass}">${statusText}</span>
             </div>
             
@@ -141,15 +151,18 @@ function createMeetingCard(meeting) {
             
             <div class="meeting-participants">
                 <i class="fas fa-users"></i>
-                <span class="participant-count">${meeting.participants} Katılımcı</span>
+                <span class="participant-count">${meeting.participantCount} Katılımcı</span>
             </div>
             
             <div class="meeting-actions">
                 <button class="btn-view" onclick="viewMeeting(${meeting.id})">
                     <i class="fas fa-eye"></i> Görüntüle
                 </button>
-                <button class="btn-edit" onclick="editMeeting(${meeting.id})">
+                <button class="btn-edit" onclick="editMeeting(${meeting.id})" ${meeting.status === 'iptal_edildi' ? 'disabled' : ''}>
                     <i class="fas fa-edit"></i> Düzenle
+                </button>
+                <button class="btn-cancel" onclick="cancelMeeting(${meeting.id})" ${meeting.status === 'iptal_edildi' ? 'disabled' : ''}>
+                    <i class="fas fa-ban"></i> İptal Et
                 </button>
                 <button class="btn-delete" onclick="deleteMeeting(${meeting.id})">
                     <i class="fas fa-trash"></i> Sil
@@ -173,9 +186,13 @@ function applyFilters() {
 function filterMeetings() {
     let filtered = [...currentMeetings];
     
-    // Durum filtresi
-    if (currentFilters.status) {
-        filtered = filtered.filter(meeting => meeting.status === currentFilters.status);
+    // Arama filtresi
+    if (currentFilters.search) {
+        const searchTerm = currentFilters.search.toLowerCase();
+        filtered = filtered.filter(meeting => 
+            meeting.title.toLowerCase().includes(searchTerm) ||
+            meeting.location.toLowerCase().includes(searchTerm)
+        );
     }
     
     // Tarih filtresi
@@ -186,10 +203,10 @@ function filterMeetings() {
         
         switch (currentFilters.date) {
             case 'today':
-                filtered = filtered.filter(meeting => meeting.date === today.toISOString().split('T')[0]);
+                filtered = filtered.filter(meeting => meeting.date === today.toLocaleDateString('tr-TR'));
                 break;
             case 'tomorrow':
-                filtered = filtered.filter(meeting => meeting.date === tomorrow.toISOString().split('T')[0]);
+                filtered = filtered.filter(meeting => meeting.date === tomorrow.toLocaleDateString('tr-TR'));
                 break;
             case 'this_week':
                 const weekStart = new Date(today);
@@ -197,7 +214,7 @@ function filterMeetings() {
                 const weekEnd = new Date(weekStart);
                 weekEnd.setDate(weekStart.getDate() + 6);
                 filtered = filtered.filter(meeting => {
-                    const meetingDate = new Date(meeting.date);
+                    const meetingDate = new Date(meeting.datetime);
                     return meetingDate >= weekStart && meetingDate <= weekEnd;
                 });
                 break;
@@ -209,15 +226,6 @@ function filterMeetings() {
                 });
                 break;
         }
-    }
-    
-    // Arama filtresi
-    if (currentFilters.search) {
-        const searchTerm = currentFilters.search.toLowerCase();
-        filtered = filtered.filter(meeting => 
-            meeting.name.toLowerCase().includes(searchTerm) ||
-            meeting.location.toLowerCase().includes(searchTerm)
-        );
     }
     
     return filtered;
@@ -293,7 +301,7 @@ function viewMeeting(meetingId) {
     const modalTitle = document.getElementById('modalTitle');
     const modalBody = document.getElementById('modalBody');
     
-    modalTitle.textContent = meeting.name;
+    modalTitle.textContent = meeting.title;
     
     modalBody.innerHTML = `
         <div class="meeting-detail-item">
@@ -309,22 +317,8 @@ function viewMeeting(meetingId) {
             <div class="meeting-detail-value">${meeting.location}</div>
         </div>
         <div class="meeting-detail-item">
-            <div class="meeting-detail-label">Durum:</div>
-            <div class="meeting-detail-value">
-                <span class="meeting-status status-${meeting.status}">${getStatusText(meeting.status)}</span>
-            </div>
-        </div>
-        <div class="meeting-detail-item">
-            <div class="meeting-detail-label">Açıklama:</div>
-            <div class="meeting-detail-value">${meeting.description}</div>
-        </div>
-        <div class="meeting-detail-item">
             <div class="meeting-detail-label">Katılımcılar:</div>
-            <div class="meeting-detail-value">
-                <div class="participants-list">
-                    ${generateParticipantList(meeting.participants)}
-                </div>
-            </div>
+            <div class="meeting-detail-value">${meeting.participantCount} kişi</div>
         </div>
     `;
     
@@ -339,12 +333,10 @@ function editMeeting(meetingId) {
     currentMeetingId = meetingId;
     
     // Form alanlarını doldur
-    document.getElementById('editMeetingName').value = meeting.name;
+    document.getElementById('editMeetingName').value = meeting.title;
     document.getElementById('editMeetingDate').value = meeting.date;
     document.getElementById('editMeetingTime').value = meeting.time;
     document.getElementById('editMeetingLocation').value = meeting.location;
-    document.getElementById('editMeetingStatus').value = meeting.status;
-    document.getElementById('editMeetingDescription').value = meeting.description || '';
     
     // Modal'ı göster
     document.getElementById('editMeetingModal').style.display = 'block';
@@ -358,16 +350,14 @@ function saveMeetingChanges() {
     // Form verilerini al
     const updatedMeeting = {
         ...meeting,
-        name: document.getElementById('editMeetingName').value,
+        title: document.getElementById('editMeetingName').value,
         date: document.getElementById('editMeetingDate').value,
         time: document.getElementById('editMeetingTime').value,
-        location: document.getElementById('editMeetingLocation').value,
-        status: document.getElementById('editMeetingStatus').value,
-        description: document.getElementById('editMeetingDescription').value
+        location: document.getElementById('editMeetingLocation').value
     };
     
     // Validasyon
-    if (!updatedMeeting.name || !updatedMeeting.date || !updatedMeeting.time || !updatedMeeting.location) {
+    if (!updatedMeeting.title || !updatedMeeting.date || !updatedMeeting.time || !updatedMeeting.location) {
         showNotification('Lütfen tüm zorunlu alanları doldurun.', 'error');
         return;
     }
@@ -393,7 +383,7 @@ function deleteMeeting(meetingId) {
     currentMeetingId = meetingId;
     
     // Silme onay modal'ını göster
-    document.getElementById('deleteMeetingName').textContent = meeting.name;
+    document.getElementById('deleteMeetingName').textContent = meeting.title;
     document.getElementById('deleteConfirmModal').style.display = 'block';
 }
 
@@ -425,16 +415,6 @@ function closeDeleteModal() {
 }
 
 // Yardımcı fonksiyonlar
-function getStatusText(status) {
-    const statusMap = {
-        'planlandi': 'Planlandı',
-        'devam_ediyor': 'Devam Ediyor',
-        'tamamlandi': 'Tamamlandı',
-        'iptal_edildi': 'İptal Edildi'
-    };
-    return statusMap[status] || status;
-}
-
 function formatDate(dateString) {
     const date = new Date(dateString);
     return date.toLocaleDateString('tr-TR', {
@@ -442,31 +422,6 @@ function formatDate(dateString) {
         month: 'long',
         day: 'numeric'
     });
-}
-
-function generateParticipantList(count) {
-    const names = ['Ahmet Yılmaz', 'Fatma Demir', 'Mehmet Kaya', 'Ayşe Özkan', 'Ali Veli', 'Zeynep Arslan'];
-    const emails = ['ahmet@example.com', 'fatma@example.com', 'mehmet@example.com', 'ayse@example.com', 'ali@example.com', 'zeynep@example.com'];
-    
-    let participantsHTML = '';
-    
-    for (let i = 0; i < Math.min(count, names.length); i++) {
-        const name = names[i];
-        const email = emails[i];
-        const initials = name.split(' ').map(n => n[0]).join('');
-        
-        participantsHTML += `
-            <div class="participant-item">
-                <div class="participant-avatar">${initials}</div>
-                <div class="participant-info">
-                    <div class="participant-name">${name}</div>
-                    <div class="participant-email">${email}</div>
-                </div>
-            </div>
-        `;
-    }
-    
-    return participantsHTML;
 }
 
 // Debounce fonksiyonu
@@ -521,6 +476,54 @@ function getNotificationIcon(type) {
         info: 'info-circle'
     };
     return icons[type] || 'info-circle';
+}
+
+// Toplantı kartı event listener'larını ekle
+function addMeetingCardListeners() {
+    console.log('Toplantı kartı event listener\'ları eklendi');
+}
+
+// Toplantı durum metni
+function getStatusText(status) {
+    const statusTexts = {
+        'aktif': 'Aktif',
+        'iptal_edildi': 'İptal Edildi',
+        'tamamlandi': 'Tamamlandı'
+    };
+    return statusTexts[status] || 'Aktif';
+}
+
+// Toplantıyı iptal et
+async function cancelMeeting(meetingId) {
+    if (!confirm('Bu toplantıyı iptal etmek istediğinizden emin misiniz?')) {
+        return;
+    }
+    
+    try {
+        const response = await fetch('php/update_meeting_status.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                meetingId: meetingId,
+                status: 'iptal_edildi'
+            })
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            showNotification(result.message, 'success');
+            // Toplantı listesini yenile
+            loadMeetings();
+        } else {
+            showNotification(result.message, 'error');
+        }
+    } catch (error) {
+        console.error('Toplantı iptal hatası:', error);
+        showNotification('Toplantı iptal edilirken hata oluştu', 'error');
+    }
 }
 
 // Modal dışına tıklandığında kapat

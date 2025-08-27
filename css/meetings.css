@@ -255,6 +255,21 @@
     background: #fed7aa;
 }
 
+.btn-cancel {
+    background: #fef5e7;
+    color: #d69e2e;
+}
+
+.btn-cancel:hover {
+    background: #f6e05e;
+}
+
+.btn-cancel:disabled {
+    background: #e2e8f0;
+    color: #a0aec0;
+    cursor: not-allowed;
+}
+
 .btn-delete {
     background: #fed7d7;
     color: #742a2a;

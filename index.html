@@ -65,9 +65,14 @@
                              <div class="participant-info">
                                  <span id="participantCount" class="participant-count">Katılımcılar yükleniyor...</span>
                              </div>
-                             <select id="existingParticipants" multiple>
-                                 <!-- PHP'den gelecek katılımcılar -->
-                             </select>
+                             <div class="existing-participants-container">
+                                 <select id="existingParticipants" multiple>
+                                     <!-- PHP'den gelecek katılımcılar -->
+                                 </select>
+                                 <button type="button" id="addSelectedBtn" class="btn-secondary">
+                                     <i class="fas fa-plus"></i> Seçilenleri Ekle
+                                 </button>
+                             </div>
                              <small>Birden fazla seçim için Ctrl (Cmd) tuşunu basılı tutun</small>
                          </div>
                          
@@ -78,6 +83,33 @@
                                  <button type="button" id="addEmailBtn" class="btn-secondary">
                                      <i class="fas fa-plus"></i> Ekle
                                  </button>
+                             </div>
+                             
+                             <!-- Hızlı E-posta Kartları -->
+                             <div class="quick-email-cards">
+                                 <small>Hızlı seçim için tıklayın:</small>
+                                 <div class="email-provider-cards">
+                                     <button type="button" class="email-provider-card" data-domain="@gmail.com">
+                                         <i class="fab fa-google"></i>
+                                         <span>Gmail</span>
+                                     </button>
+                                     <button type="button" class="email-provider-card" data-domain="@hotmail.com">
+                                         <i class="fab fa-microsoft"></i>
+                                         <span>Hotmail</span>
+                                     </button>
+                                     <button type="button" class="email-provider-card" data-domain="@yahoo.com">
+                                         <i class="fab fa-yahoo"></i>
+                                         <span>Yahoo</span>
+                                     </button>
+                                     <button type="button" class="email-provider-card" data-domain="@outlook.com">
+                                         <i class="fab fa-microsoft"></i>
+                                         <span>Outlook</span>
+                                     </button>
+                                     <button type="button" class="email-provider-card" data-domain="@icloud.com">
+                                         <i class="fab fa-apple"></i>
+                                         <span>iCloud</span>
+                                     </button>
+                                 </div>
                              </div>
                          </div>
                          

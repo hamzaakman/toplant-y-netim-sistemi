@@ -49,10 +49,11 @@ try {
     
     try {
         // 1. Toplantıyı kaydet
-        $insertMeetingQuery = "INSERT INTO toplantilar (toplanti_adi, tarih, saat, yer, olusturma_tarihi) 
-                               VALUES (?, ?, ?, ?, NOW())";
+        $insertMeetingQuery = "INSERT INTO toplantilar (baslik, tarih_saat, yer, durum) 
+                               VALUES (?, ?, ?, 'aktif')";
         $stmt = $pdo->prepare($insertMeetingQuery);
-        $stmt->execute([$meetingName, $meetingDate, $meetingTime, $meetingLocation]);
+        $meetingDateTime = $meetingDate . ' ' . $meetingTime;
+        $stmt->execute([$meetingName, $meetingDateTime, $meetingLocation]);
         
         $meetingId = $pdo->lastInsertId();
         
@@ -67,17 +68,17 @@ try {
                 }
                 
                 // E-posta zaten var mı kontrol et
-                $checkEmailQuery = "SELECT id FROM katilimcilar WHERE email = ?";
+                $checkEmailQuery = "SELECT katilimci_id FROM katilimcilar WHERE e_posta = ?";
                 $stmt = $pdo->prepare($checkEmailQuery);
                 $stmt->execute([$email]);
                 $existingParticipant = $stmt->fetch();
                 
                 if ($existingParticipant) {
                     // Mevcut katılımcıyı listeye ekle
-                    $newParticipantIds[] = $existingParticipant['id'];
+                    $newParticipantIds[] = $existingParticipant['katilimci_id'];
                 } else {
                     // Yeni katılımcı ekle
-                    $insertParticipantQuery = "INSERT INTO katilimcilar (ad_soyad, email, kayit_tarihi) 
+                    $insertParticipantQuery = "INSERT INTO katilimcilar (ad_soyad, e_posta, kayit_tarihi) 
                                              VALUES (?, ?, NOW())";
                     $stmt = $pdo->prepare($insertParticipantQuery);
                     $stmt->execute([$email, $email]); // Ad soyad olarak e-posta kullan
@@ -113,7 +114,7 @@ try {
         
         // Katılımcı bilgilerini al
         if (!empty($allParticipantIds)) {
-            $participantInfoQuery = "SELECT id, ad_soyad, email FROM katilimcilar WHERE id IN (" . 
+            $participantInfoQuery = "SELECT katilimci_id, ad_soyad, e_posta FROM katilimcilar WHERE katilimci_id IN (" . 
                                    str_repeat('?,', count($allParticipantIds) - 1) . '?)';
             $stmt = $pdo->prepare($participantInfoQuery);
             $stmt->execute($allParticipantIds);

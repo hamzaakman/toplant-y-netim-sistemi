@@ -166,6 +166,8 @@ header h1 i {
     align-items: center;
     gap: 8px;
     animation: slideIn 0.3s ease;
+    min-width: 100px;
+    text-align: center;
 }
 
 .email-tag .remove-email {
@@ -350,4 +352,92 @@ select[multiple] option:checked {
 @keyframes spin {
     0% { transform: rotate(0deg); }
     100% { transform: rotate(360deg); }
+}
+
+/* Existing Participants Container */
+.existing-participants-container {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+}
+
+.existing-participants-container select {
+    flex: 1;
+    min-height: 100px;
+}
+
+.existing-participants-container button {
+    white-space: nowrap;
+    padding: 8px 16px;
+    height: fit-content;
+}
+
+/* Quick Email Cards */
+.quick-email-cards {
+    margin-top: 15px;
+}
+
+.quick-email-cards small {
+    display: block;
+    margin-bottom: 10px;
+    color: #718096;
+    font-size: 0.875rem;
+}
+
+.email-provider-cards {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.email-provider-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 8px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 80px;
+    font-size: 0.75rem;
+    color: #4a5568;
+}
+
+.email-provider-card:hover {
+    border-color: #667eea;
+    background: #f8fafc;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.15);
+}
+
+.email-provider-card i {
+    font-size: 1.2rem;
+}
+
+.email-provider-card span {
+    font-weight: 500;
+}
+
+.email-provider-card[data-domain="@gmail.com"]:hover {
+    border-color: #ea4335;
+    color: #ea4335;
+}
+
+.email-provider-card[data-domain="@hotmail.com"]:hover,
+.email-provider-card[data-domain="@outlook.com"]:hover {
+    border-color: #0078d4;
+    color: #0078d4;
+}
+
+.email-provider-card[data-domain="@yahoo.com"]:hover {
+    border-color: #6001d2;
+    color: #6001d2;
+}
+
+.email-provider-card[data-domain="@icloud.com"]:hover {
+    border-color: #000000;
+    color: #000000;
 }
