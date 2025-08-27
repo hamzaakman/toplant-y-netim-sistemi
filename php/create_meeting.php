@@ -1,5 +1,28 @@
 <?php
+// Debug log başlat
+error_log("=== CREATE_MEETING.PHP BAŞLADI ===");
+error_log("POST verileri: " . print_r($_POST, true));
+
 require_once 'config.php';
+error_log("config.php include edildi");
+
+// JSON response helper (config.php'den gelmiyorsa)
+if (!function_exists('sendJSONResponse')) {
+    error_log("sendJSONResponse fonksiyonu tanımlanıyor");
+    function sendJSONResponse($success, $message, $data = null) {
+        error_log("sendJSONResponse çağrıldı: success=$success, message=$message");
+        header('Content-Type: application/json; charset=utf-8');
+        echo json_encode([
+            'success' => $success,
+            'message' => $message,
+            'data' => $data,
+            'timestamp' => date('Y-m-d H:i:s')
+        ], JSON_UNESCAPED_UNICODE);
+        exit;
+    }
+} else {
+    error_log("sendJSONResponse fonksiyonu zaten tanımlı");
+}
 
 // Session başlat
 session_start();
@@ -170,4 +193,6 @@ function sendToN8N($data) {
     // Log kaydı
     error_log("N8N webhook'a veri gönderildi: " . json_encode($data));
 }
+
+
 ?>

@@ -26,10 +26,13 @@ try {
         $params[] = $searchTerm;
     }
     
-    // Durum filtresi
+    // Durum filtresi - varsayılan olarak sadece aktif katılımcıları getir
     if (!empty($status)) {
         $sql .= " AND durum = ?";
         $params[] = $status;
+    } else {
+        // Durum belirtilmemişse sadece aktif katılımcıları getir
+        $sql .= " AND durum = 'aktif'";
     }
     
     // Sıralama

@@ -164,9 +164,6 @@ function createMeetingCard(meeting) {
                 <button class="btn-cancel" onclick="cancelMeeting(${meeting.id})" ${meeting.status === 'iptal_edildi' ? 'disabled' : ''}>
                     <i class="fas fa-ban"></i> İptal Et
                 </button>
-                <button class="btn-delete" onclick="deleteMeeting(${meeting.id})">
-                    <i class="fas fa-trash"></i> Sil
-                </button>
             </div>
         </div>
     `;
@@ -186,6 +183,9 @@ function applyFilters() {
 function filterMeetings() {
     let filtered = [...currentMeetings];
     
+    // İptal edilen toplantıları gizle (varsayılan olarak)
+    filtered = filtered.filter(meeting => meeting.status !== 'iptal_edildi');
+    
     // Arama filtresi
     if (currentFilters.search) {
         const searchTerm = currentFilters.search.toLowerCase();
@@ -193,6 +193,11 @@ function filterMeetings() {
             meeting.title.toLowerCase().includes(searchTerm) ||
             meeting.location.toLowerCase().includes(searchTerm)
         );
+    }
+    
+    // Durum filtresi
+    if (currentFilters.status) {
+        filtered = filtered.filter(meeting => meeting.status === currentFilters.status);
     }
     
     // Tarih filtresi
@@ -388,17 +393,49 @@ function deleteMeeting(meetingId) {
 }
 
 // Silme işlemini onayla
-function confirmDeleteMeeting() {
-    // Toplantıyı listeden kaldır
-    currentMeetings = currentMeetings.filter(m => m.id !== currentMeetingId);
-    
-    // Listeyi yenile
-    displayMeetings();
-    
-    // Modal'ı kapat
-    closeDeleteModal();
-    
-    showNotification('Toplantı başarıyla silindi.', 'success');
+async function confirmDeleteMeeting() {
+    try {
+        console.log('confirmDeleteMeeting çağrıldı, meetingId:', currentMeetingId);
+        
+        // Toplantı durumunu 'iptal_edildi' olarak güncelle
+        const response = await fetch('php/update_meeting_status.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                meetingId: currentMeetingId,
+                status: 'iptal_edildi'
+            })
+        });
+        
+        console.log('API yanıtı:', response);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        console.log('API sonucu:', result);
+        
+        if (result.success) {
+            // Toplantı listesini yenile
+            loadMeetings();
+            
+            // Modal'ı kapat
+            closeDeleteModal();
+            
+            // Başarılı bildirim göster
+            alert('✅ Toplantı başarıyla iptal edildi.');
+        } else {
+            // Hata bildirimi göster
+            alert('❌ ' + (result.message || 'Toplantı iptal edilemedi'));
+        }
+        
+    } catch (error) {
+        console.error('Toplantı iptal hatası:', error);
+        showNotification('Toplantı iptal edilirken hata oluştu', 'error');
+    }
 }
 
 // Modal'ları kapat
@@ -495,11 +532,44 @@ function getStatusText(status) {
 
 // Toplantıyı iptal et
 async function cancelMeeting(meetingId) {
-    if (!confirm('Bu toplantıyı iptal etmek istediğinizden emin misiniz?')) {
-        return;
+    console.log('cancelMeeting çağrıldı, meetingId:', meetingId);
+    
+    // Özel onay modal'ını göster
+    showCancelConfirmModal(meetingId);
+}
+
+// İptal onay modal'ını göster
+function showCancelConfirmModal(meetingId) {
+    const modal = document.getElementById('cancelConfirmModal');
+    const meetingName = document.getElementById('cancelMeetingName');
+    
+    // Toplantı adını bul
+    const meeting = currentMeetings.find(m => m.id === meetingId);
+    if (meeting) {
+        meetingName.textContent = meeting.title;
     }
     
+    // Modal'ı göster
+    modal.style.display = 'block';
+    
+    // Modal'ı kapatma butonlarına event listener ekle
+    document.getElementById('confirmCancelBtn').onclick = () => {
+        performCancelMeeting(meetingId);
+        closeCancelConfirmModal();
+    };
+    
+    document.getElementById('cancelCancelBtn').onclick = closeCancelConfirmModal;
+}
+
+// İptal onay modal'ını kapat
+function closeCancelConfirmModal() {
+    document.getElementById('cancelConfirmModal').style.display = 'none';
+}
+
+// Toplantı iptal işlemini gerçekleştir
+async function performCancelMeeting(meetingId) {
     try {
+        console.log('API çağrısı yapılıyor...');
         const response = await fetch('php/update_meeting_status.php', {
             method: 'POST',
             headers: {
@@ -511,19 +581,59 @@ async function cancelMeeting(meetingId) {
             })
         });
         
+        console.log('API yanıtı:', response);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
         const result = await response.json();
+        console.log('API sonucu:', result);
         
         if (result.success) {
-            showNotification(result.message, 'success');
+            // Başarılı bildirim göster
+            showCustomNotification('✅ ' + result.message, 'success');
             // Toplantı listesini yenile
             loadMeetings();
         } else {
-            showNotification(result.message, 'error');
+            // Hata bildirimi göster
+            showCustomNotification('❌ ' + result.message, 'error');
         }
     } catch (error) {
         console.error('Toplantı iptal hatası:', error);
-        showNotification('Toplantı iptal edilirken hata oluştu', 'error');
+        // Hata bildirimi göster
+        showCustomNotification('❌ Toplantı iptal edilirken hata oluştu: ' + error.message, 'error');
     }
+}
+
+// Özel bildirim göster
+function showCustomNotification(message, type = 'info') {
+    // Mevcut bildirimleri temizle
+    const existingNotifications = document.querySelectorAll('.custom-notification');
+    existingNotifications.forEach(notification => notification.remove());
+    
+    // Yeni bildirim oluştur
+    const notification = document.createElement('div');
+    notification.className = `custom-notification custom-notification-${type}`;
+    notification.innerHTML = `
+        <div class="custom-notification-content">
+            <i class="fas fa-${getNotificationIcon(type)}"></i>
+            <span>${message}</span>
+        </div>
+        <button class="custom-notification-close" onclick="this.parentElement.remove()">
+            <i class="fas fa-times"></i>
+        </button>
+    `;
+    
+    // Bildirimi sayfaya ekle
+    document.body.appendChild(notification);
+    
+    // Otomatik kaldırma
+    setTimeout(() => {
+        if (notification.parentElement) {
+            notification.remove();
+        }
+    }, 5000);
 }
 
 // Modal dışına tıklandığında kapat

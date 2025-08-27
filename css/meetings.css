@@ -279,6 +279,96 @@
     background: #feb2b2;
 }
 
+/* Özel Bildirim Stilleri */
+.custom-notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 16px 20px;
+    min-width: 300px;
+    z-index: 10000;
+    animation: slideInRight 0.3s ease-out;
+    border-left: 4px solid #667eea;
+}
+
+.custom-notification-success {
+    border-left-color: #48bb78;
+}
+
+.custom-notification-error {
+    border-left-color: #f56565;
+}
+
+.custom-notification-warning {
+    border-left-color: #ed8936;
+}
+
+.custom-notification-info {
+    border-left-color: #667eea;
+}
+
+.custom-notification-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.custom-notification-content i {
+    font-size: 1.2rem;
+}
+
+.custom-notification-success i {
+    color: #48bb78;
+}
+
+.custom-notification-error i {
+    color: #f56565;
+}
+
+.custom-notification-warning i {
+    color: #ed8936;
+}
+
+.custom-notification-info i {
+    color: #667eea;
+}
+
+.custom-notification-content span {
+    flex: 1;
+    font-weight: 500;
+    color: #2d3748;
+}
+
+.custom-notification-close {
+    background: none;
+    border: none;
+    color: #a0aec0;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    transition: all 0.2s ease;
+    margin-left: 12px;
+}
+
+.custom-notification-close:hover {
+    background: #f7fafc;
+    color: #4a5568;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateX(0);
+        opacity: 1;
+    }
+}
+
 /* Loading Placeholder */
 .loading-placeholder {
     text-align: center;

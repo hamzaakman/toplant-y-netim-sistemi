@@ -375,9 +375,13 @@ async function saveNewParticipant() {
         return;
     }
     
+    // Ad soyad'ı formatla - her kelimenin ilk harfini büyük yap
+    const rawName = formData.get('ad_soyad');
+    const formattedName = formatName(rawName);
+    
     // Form verilerini JSON'a çevir
     const participantData = {
-        ad_soyad: formData.get('ad_soyad'),
+        ad_soyad: formattedName,
         e_posta: formData.get('e_posta'),
         telefon: formData.get('telefon') || '',
         departman: formData.get('departman') || '',
@@ -427,10 +431,14 @@ function saveParticipantChanges() {
     const participant = currentParticipants.find(p => p.katilimci_id == currentParticipantId);
     if (!participant) return;
     
+    // Ad soyad'ı formatla - her kelimenin ilk harfini büyük yap
+    const rawName = document.getElementById('editParticipantName').value;
+    const formattedName = formatName(rawName);
+    
     // Form verilerini al
     const updatedParticipant = {
         ...participant,
-        ad_soyad: document.getElementById('editParticipantName').value,
+        ad_soyad: formattedName,
         e_posta: document.getElementById('editParticipantEmail').value,
         telefon: document.getElementById('editParticipantPhone').value,
         departman: document.getElementById('editParticipantDepartment').value,
@@ -471,17 +479,42 @@ function deleteParticipant(participantId) {
 }
 
 // Silme işlemini onayla
-function confirmDeleteParticipant() {
-    // Katılımcıyı listeden kaldır
-    currentParticipants = currentParticipants.filter(p => p.katilimci_id != currentParticipantId);
-    
-    // Listeyi yenile
-    displayParticipants();
-    
-    // Modal'ı kapat
-    closeDeleteModal();
-    
-    showNotification('Katılımcı başarıyla silindi.', 'success');
+async function confirmDeleteParticipant() {
+    try {
+        // Katılımcı durumunu 'pasif' olarak güncelle
+        const response = await fetch('php/update_participant_status.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                participantId: currentParticipantId,
+                status: 'pasif'
+            })
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Katılımcı listesini yenile
+            loadParticipants();
+            
+            // Modal'ı kapat
+            closeDeleteModal();
+            
+            showNotification('Katılımcı pasif olarak işaretlendi.', 'success');
+        } else {
+            showNotification(result.message || 'Katılımcı pasif yapılamadı', 'error');
+        }
+        
+    } catch (error) {
+        console.error('Katılımcı pasif yapma hatası:', error);
+        showNotification('Katılımcı pasif yapılırken hata oluştu', 'error');
+    }
 }
 
 // Yardımcı fonksiyonlar
@@ -552,6 +585,23 @@ window.onclick = function(event) {
 function addParticipantCardListeners() {
     // Bu fonksiyon şu anda boş, gerekirse gelecekte eklenebilir
     console.log('Event listener\'lar eklendi');
+}
+
+// Ad soyad formatla - her kelimenin ilk harfini büyük yap
+function formatName(name) {
+    if (!name) return '';
+    
+    // Kelimeleri ayır (boşluk, nokta, tire, alt çizgi ile)
+    const words = name.split(/[\s.\-_]+/);
+    
+    // Her kelimenin ilk harfini büyük yap
+    const formattedWords = words.map(word => {
+        if (word.length === 0) return '';
+        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+    });
+    
+    // Kelimeleri birleştir
+    return formattedWords.join(' ').trim();
 }
 
 // Hızlı e-posta kartlarını ayarla

@@ -38,11 +38,10 @@
                     <div class="filter-group">
                         <label for="statusFilter">Durum:</label>
                         <select id="statusFilter">
-                            <option value="">Tümü</option>
-                            <option value="planlandi">Planlandı</option>
-                            <option value="devam_ediyor">Devam Ediyor</option>
+                            <option value="">Aktif Toplantılar</option>
+                            <option value="aktif">Aktif</option>
                             <option value="tamamlandi">Tamamlandı</option>
-                            <option value="iptal_edildi">İptal Edildi</option>
+                            <option value="iptal_edildi">İptal Edildi (Gizli)</option>
                         </select>
                     </div>
                     
@@ -148,6 +147,25 @@
             <div class="modal-footer">
                 <button class="btn-secondary" onclick="closeEditModal()">Vazgeç</button>
                 <button class="btn-primary" onclick="saveMeetingChanges()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- İptal Onay Modal -->
+    <div id="cancelConfirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Toplantı İptal Et</h3>
+                <span class="close" onclick="closeCancelConfirmModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Bu toplantıyı iptal etmek istediğinizden emin misiniz?</p>
+                <p><strong id="cancelMeetingName"></strong></p>
+                <p class="warning-text">Bu işlem geri alınabilir.</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancelCancelBtn">Vazgeç</button>
+                <button class="btn-danger" id="confirmCancelBtn">Evet, İptal Et</button>
             </div>
         </div>
     </div>

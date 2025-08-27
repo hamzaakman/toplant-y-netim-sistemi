@@ -20,15 +20,15 @@ try {
     // JSON verisini al
     $input = json_decode(file_get_contents('php://input'), true);
     
-    if (!isset($input['meetingId']) || !isset($input['status'])) {
-        sendJSONResponse(false, 'Toplantı ID ve durum gerekli');
+    if (!isset($input['participantId']) || !isset($input['status'])) {
+        sendJSONResponse(false, 'Katılımcı ID ve durum gerekli');
     }
     
-    $meetingId = (int)$input['meetingId'];
+    $participantId = (int)$input['participantId'];
     $status = $input['status'];
     
     // Geçerli durumları kontrol et
-    $validStatuses = ['aktif', 'iptal_edildi', 'tamamlandi'];
+    $validStatuses = ['aktif', 'pasif'];
     if (!in_array($status, $validStatuses)) {
         sendJSONResponse(false, 'Geçersiz durum değeri');
     }
@@ -40,39 +40,40 @@ try {
     }
     
     // Önce durum sütununun var olup olmadığını kontrol et
-    $checkColumnQuery = "SHOW COLUMNS FROM toplantilar LIKE 'durum'";
+    $checkColumnQuery = "SHOW COLUMNS FROM katilimcilar LIKE 'durum'";
     $stmt = $pdo->prepare($checkColumnQuery);
     $stmt->execute();
     
     if ($stmt->rowCount() === 0) {
         // Durum sütunu yoksa ekle
-        $addColumnQuery = "ALTER TABLE toplantilar ADD COLUMN durum ENUM('aktif', 'iptal_edildi', 'tamamlandi') DEFAULT 'aktif' AFTER olusturan_kisi_id";
+        $addColumnQuery = "ALTER TABLE katilimcilar ADD COLUMN durum ENUM('aktif', 'pasif') DEFAULT 'aktif' AFTER pozisyon";
         $pdo->exec($addColumnQuery);
+        
+        // Mevcut tüm katılımcıları aktif olarak işaretle
+        $updateAllQuery = "UPDATE katilimcilar SET durum = 'aktif' WHERE durum IS NULL";
+        $pdo->exec($updateAllQuery);
     }
     
-    // Toplantı durumunu güncelle
-    $updateQuery = "UPDATE toplantilar SET durum = ? WHERE toplanti_id = ?";
+    // Katılımcı durumunu güncelle
+    $updateQuery = "UPDATE katilimcilar SET durum = ? WHERE katilimci_id = ?";
     $stmt = $pdo->prepare($updateQuery);
-    $stmt->execute([$status, $meetingId]);
+    $stmt->execute([$status, $participantId]);
     
     if ($stmt->rowCount() > 0) {
         // Güncelleme başarılı
         $message = '';
         switch ($status) {
-            case 'iptal_edildi':
-                $message = 'Toplantı başarıyla iptal edildi';
-                break;
-            case 'tamamlandi':
-                $message = 'Toplantı tamamlandı olarak işaretlendi';
+            case 'pasif':
+                $message = 'Katılımcı pasif olarak işaretlendi';
                 break;
             case 'aktif':
-                $message = 'Toplantı aktif olarak işaretlendi';
+                $message = 'Katılımcı aktif olarak işaretlendi';
                 break;
         }
         
-        sendJSONResponse(true, $message, ['meetingId' => $meetingId, 'status' => $status]);
+        sendJSONResponse(true, $message, ['participantId' => $participantId, 'status' => $status]);
     } else {
-        sendJSONResponse(false, 'Toplantı bulunamadı veya güncelleme yapılamadı');
+        sendJSONResponse(false, 'Katılımcı bulunamadı veya güncelleme yapılamadı');
     }
     
 } catch (PDOException $e) {
@@ -82,6 +83,4 @@ try {
     error_log("Genel hata: " . $e->getMessage());
     sendJSONResponse(false, $e->getMessage());
 }
-
-
 ?>
