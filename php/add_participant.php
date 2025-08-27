@@ -25,10 +25,10 @@ try {
     }
     
     // Gerekli alanları kontrol et
-    if (empty($input['ad_soyad']) || empty($input['e_posta'])) {
+    if (empty($input['ad_soyad']) || empty($input['e_posta']) || empty($input['telefon']) || empty($input['departman']) || empty($input['pozisyon'])) {
         echo json_encode([
             'success' => false,
-            'error' => 'Ad soyad ve e-posta alanları zorunludur'
+            'error' => 'Ad soyad, e-posta, telefon, departman ve pozisyon alanları zorunludur'
         ], JSON_UNESCAPED_UNICODE);
         exit;
     }

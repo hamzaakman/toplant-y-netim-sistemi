@@ -334,10 +334,7 @@ function viewParticipant(participantId) {
             <div class="participant-detail-label">Son Toplantı:</div>
             <div class="participant-detail-value">${participant.son_topanti ? new Date(participant.son_topanti).toLocaleDateString('tr-TR') : 'Henüz toplantı yok'}</div>
         </div>
-        <div class="participant-detail-item">
-            <div class="participant-detail-label">Notlar:</div>
-            <div class="participant-detail-value">${participant.notlar}</div>
-        </div>
+
     `;
     
     modal.style.display = 'block';
@@ -357,7 +354,6 @@ function editParticipant(participantId) {
     document.getElementById('editParticipantPhone').value = participant.telefon;
     document.getElementById('editParticipantDepartment').value = participant.departman;
     document.getElementById('editParticipantPosition').value = participant.pozisyon;
-    document.getElementById('editParticipantNotes').value = participant.notlar;
     document.getElementById('editParticipantStatus').value = participant.durum;
     
     // Modal'ı göster
@@ -370,8 +366,8 @@ async function saveNewParticipant() {
     const formData = new FormData(form);
     
     // Validasyon
-    if (!formData.get('ad_soyad') || !formData.get('e_posta')) {
-        showNotification('Lütfen ad soyad ve e-posta alanlarını doldurun.', 'error');
+    if (!formData.get('ad_soyad') || !formData.get('e_posta') || !formData.get('telefon') || !formData.get('departman') || !formData.get('pozisyon')) {
+        showNotification('Lütfen tüm alanları doldurun. Ad soyad, e-posta, telefon, departman ve pozisyon zorunludur.', 'error');
         return;
     }
     
@@ -386,7 +382,6 @@ async function saveNewParticipant() {
         telefon: formData.get('telefon') || '',
         departman: formData.get('departman') || '',
         pozisyon: formData.get('pozisyon') || '',
-        notlar: formData.get('notlar') || '',
         durum: 'aktif'
     };
     
@@ -427,7 +422,7 @@ async function saveNewParticipant() {
 }
 
 // Katılımcı değişikliklerini kaydet
-function saveParticipantChanges() {
+async function saveParticipantChanges() {
     const participant = currentParticipants.find(p => p.katilimci_id == currentParticipantId);
     if (!participant) return;
     
@@ -437,33 +432,53 @@ function saveParticipantChanges() {
     
     // Form verilerini al
     const updatedParticipant = {
-        ...participant,
+        katilimci_id: currentParticipantId,
         ad_soyad: formattedName,
         e_posta: document.getElementById('editParticipantEmail').value,
         telefon: document.getElementById('editParticipantPhone').value,
         departman: document.getElementById('editParticipantDepartment').value,
         pozisyon: document.getElementById('editParticipantPosition').value,
-        notlar: document.getElementById('editParticipantNotes').value,
         durum: document.getElementById('editParticipantStatus').value
     };
     
     // Validasyon
-    if (!updatedParticipant.ad_soyad || !updatedParticipant.e_posta) {
-        showNotification('Lütfen ad soyad ve e-posta alanlarını doldurun.', 'error');
+    if (!updatedParticipant.ad_soyad || !updatedParticipant.e_posta || !updatedParticipant.telefon || !updatedParticipant.departman || !updatedParticipant.pozisyon) {
+        showNotification('Lütfen tüm alanları doldurun. Ad soyad, e-posta, telefon, departman ve pozisyon zorunludur.', 'error');
         return;
     }
     
-    // Katılımcıyı güncelle
-    const index = currentParticipants.findIndex(p => p.katilimci_id == currentParticipantId);
-    currentParticipants[index] = updatedParticipant;
-    
-    // Listeyi yenile
-    displayParticipants();
-    
-    // Modal'ı kapat
-    closeEditModal();
-    
-    showNotification('Katılımcı başarıyla güncellendi.', 'success');
+    try {
+        // Veritabanına güncelle
+        const response = await fetch('php/update_participant.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(updatedParticipant)
+        });
+        
+        if (!response.ok) {
+            throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        }
+        
+        const result = await response.json();
+        
+        if (result.success) {
+            // Katılımcı listesini yenile
+            loadParticipants();
+            
+            // Modal'ı kapat
+            closeEditModal();
+            
+            showNotification('Katılımcı başarıyla güncellendi.', 'success');
+        } else {
+            showNotification(result.message || 'Katılımcı güncellenemedi', 'error');
+        }
+        
+    } catch (error) {
+        console.error('Katılımcı güncelleme hatası:', error);
+        showNotification('Katılımcı güncellenirken hata oluştu', 'error');
+    }
 }
 
 // Katılımcı sil
