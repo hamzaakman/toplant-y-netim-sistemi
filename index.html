@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toplantı Yönetim Sistemi</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-users"></i> Toplantı Yönetim Sistemi</h1>
+            <nav class="main-nav">
+                <a href="index.html" class="nav-link active"><i class="fas fa-plus"></i> Yeni Toplantı</a>
+                <a href="meetings.html" class="nav-link"><i class="fas fa-list"></i> Toplantı Listesi</a>
+                <a href="participants.html" class="nav-link"><i class="fas fa-users"></i> Katılımcılar</a>
+            </nav>
+        </header>
+        
+        <main>
+            <div class="form-container">
+                <h2>Yeni Toplantı Oluştur</h2>
+                
+                <form id="meetingForm" action="php/create_meeting.php" method="POST">
+                    <!-- Toplantı Bilgileri -->
+                    <div class="form-section">
+                        <h3>Toplantı Bilgileri</h3>
+                        
+                        <div class="form-group">
+                            <label for="meetingName">Toplantı Adı *</label>
+                            <input type="text" id="meetingName" name="meetingName" required>
+                        </div>
+                        
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="meetingDate">Tarih *</label>
+                                <input type="date" id="meetingDate" name="meetingDate" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label for="meetingTime">Saat *</label>
+                                <input type="time" id="meetingTime" name="meetingTime" required>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="meetingLocation">Yer *</label>
+                            <input type="text" id="meetingLocation" name="meetingLocation" required>
+                        </div>
+                    </div>
+                    
+                                         <!-- Katılımcı Ekleme -->
+                     <div class="form-section">
+                         <h3>Katılımcılar</h3>
+                         
+                         <div class="form-group">
+                             <label for="participantSearch">Katılımcı Ara:</label>
+                             <input type="text" id="participantSearch" placeholder="Ad, e-posta veya departman...">
+                             <small>Hızlı arama için yazmaya başlayın</small>
+                         </div>
+                         
+                         <div class="form-group">
+                             <label for="existingParticipants">Mevcut Katılımcılar</label>
+                             <div class="participant-info">
+                                 <span id="participantCount" class="participant-count">Katılımcılar yükleniyor...</span>
+                             </div>
+                             <select id="existingParticipants" multiple>
+                                 <!-- PHP'den gelecek katılımcılar -->
+                             </select>
+                             <small>Birden fazla seçim için Ctrl (Cmd) tuşunu basılı tutun</small>
+                         </div>
+                         
+                         <div class="form-group">
+                             <label for="newParticipantEmail">Yeni Katılımcı Ekle</label>
+                             <div class="email-input-group">
+                                 <input type="email" id="newParticipantEmail" placeholder="ornek@email.com">
+                                 <button type="button" id="addEmailBtn" class="btn-secondary">
+                                     <i class="fas fa-plus"></i> Ekle
+                                 </button>
+                             </div>
+                         </div>
+                         
+                         <div id="newEmailsList" class="new-emails-list">
+                             <!-- Yeni eklenen e-postalar burada görünecek -->
+                         </div>
+                     </div>
+                    
+                    <!-- Butonlar -->
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary">
+                            <i class="fas fa-save"></i> Toplantı Oluştur
+                        </button>
+                        <button type="button" id="cancelBtn" class="btn-secondary">
+                            <i class="fas fa-times"></i> Vazgeç
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+    
+    <script src="js/script.js"></script>
+</body>
+</html>

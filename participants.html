@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Katılımcı Yönetimi - Toplantı Yönetim Sistemi</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/participants.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-users"></i> Toplantı Yönetim Sistemi</h1>
+            <nav class="main-nav">
+                <a href="index.html" class="nav-link"><i class="fas fa-plus"></i> Yeni Toplantı</a>
+                <a href="meetings.html" class="nav-link"><i class="fas fa-list"></i> Toplantı Listesi</a>
+                <a href="participants.html" class="nav-link active"><i class="fas fa-users"></i> Katılımcılar</a>
+            </nav>
+        </header>
+        
+        <main>
+            <div class="participants-container">
+                <div class="participants-header">
+                    <h2>Katılımcı Yönetimi</h2>
+                    <div class="participants-actions">
+                        <button id="refreshBtn" class="btn-secondary">
+                            <i class="fas fa-sync-alt"></i> Yenile
+                        </button>
+                        <button id="addParticipantBtn" class="btn-primary">
+                            <i class="fas fa-user-plus"></i> Yeni Katılımcı
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Filtreler -->
+                <div class="filters-section">
+                    <div class="filter-group">
+                        <label for="searchFilter">Arama:</label>
+                        <input type="text" id="searchFilter" placeholder="Ad, soyad veya e-posta...">
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="statusFilter">Durum:</label>
+                        <select id="statusFilter">
+                            <option value="">Tümü</option>
+                            <option value="aktif">Aktif</option>
+                            <option value="pasif">Pasif</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="sortFilter">Sıralama:</label>
+                        <select id="sortFilter">
+                            <option value="ad_asc">Ad (A-Z)</option>
+                            <option value="ad_desc">Ad (Z-A)</option>
+                            <option value="kayit_asc">Kayıt Tarihi (Eski)</option>
+                            <option value="kayit_desc">Kayıt Tarihi (Yeni)</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Katılımcı Listesi -->
+                <div class="participants-list" id="participantsList">
+                    <!-- Katılımcılar burada dinamik olarak yüklenecek -->
+                    <div class="loading-placeholder">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Katılımcılar yükleniyor...</p>
+                    </div>
+                </div>
+                
+                <!-- Sayfalama -->
+                <div class="pagination" id="pagination">
+                    <!-- Sayfa numaraları burada görünecek -->
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Yeni Katılımcı Ekleme Modal -->
+    <div id="addParticipantModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Yeni Katılımcı Ekle</h3>
+                <span class="close" onclick="closeAddModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="addParticipantForm">
+                    <div class="form-group">
+                        <label for="addParticipantName">Ad Soyad *</label>
+                        <input type="text" id="addParticipantName" name="ad_soyad" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="addParticipantEmail">E-posta *</label>
+                        <input type="email" id="addParticipantEmail" name="e_posta" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="addParticipantPhone">Telefon</label>
+                        <input type="tel" id="addParticipantPhone" name="telefon" placeholder="+90 5XX XXX XX XX">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="addParticipantDepartment">Departman</label>
+                        <input type="text" id="addParticipantDepartment" name="departman" placeholder="Örn: IT, Satış, Pazarlama">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="addParticipantPosition">Pozisyon</label>
+                        <input type="text" id="addParticipantPosition" name="pozisyon" placeholder="Örn: Yazılım Geliştirici">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="addParticipantNotes">Notlar</label>
+                        <textarea id="addParticipantNotes" name="notlar" rows="3" placeholder="Ek bilgiler..."></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeAddModal()">Vazgeç</button>
+                <button class="btn-primary" onclick="saveNewParticipant()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Katılımcı Düzenleme Modal -->
+    <div id="editParticipantModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Katılımcı Düzenle</h3>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="editParticipantForm">
+                    <input type="hidden" id="editParticipantId" name="katilimci_id">
+                    
+                    <div class="form-group">
+                        <label for="editParticipantName">Ad Soyad *</label>
+                        <input type="text" id="editParticipantName" name="ad_soyad" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editParticipantEmail">E-posta *</label>
+                        <input type="email" id="editParticipantEmail" name="e_posta" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editParticipantPhone">Telefon</label>
+                        <input type="tel" id="editParticipantPhone" name="telefon">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editParticipantDepartment">Departman</label>
+                        <input type="text" id="editParticipantDepartment" name="departman">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editParticipantPosition">Pozisyon</label>
+                        <input type="text" id="editParticipantPosition" name="pozisyon">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editParticipantNotes">Notlar</label>
+                        <textarea id="editParticipantNotes" name="notlar" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editParticipantStatus">Durum</label>
+                        <select id="editParticipantStatus" name="durum">
+                            <option value="aktif">Aktif</option>
+                            <option value="pasif">Pasif</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeEditModal()">Vazgeç</button>
+                <button class="btn-primary" onclick="saveParticipantChanges()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Katılımcı Detay Modal -->
+    <div id="participantDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="participantDetailTitle">Katılımcı Detayları</h3>
+                <span class="close" onclick="closeDetailModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="participantDetailBody">
+                <!-- Katılımcı detayları burada görünecek -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeDetailModal()">Kapat</button>
+                <button class="btn-primary" id="editFromDetailBtn">Düzenle</button>
+                <button class="btn-danger" id="deleteFromDetailBtn">Sil</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Silme Onay Modal -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Katılımcı Sil</h3>
+                <span class="close" onclick="closeDeleteModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Bu katılımcıyı silmek istediğinizden emin misiniz?</p>
+                <p><strong id="deleteParticipantName"></strong></p>
+                <p class="warning-text">Bu işlem geri alınamaz!</p>
+                <div class="warning-details">
+                    <p><i class="fas fa-exclamation-triangle"></i> <strong>Dikkat:</strong></p>
+                    <ul>
+                        <li>Katılımcı tüm toplantılardan kaldırılacak</li>
+                        <li>Geçmiş toplantı kayıtları etkilenmeyecek</li>
+                        <li>Bu işlem geri alınamaz</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeDeleteModal()">Vazgeç</button>
+                <button class="btn-danger" onclick="confirmDeleteParticipant()">Evet, Sil</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/participants.js"></script>
+</body>
+</html>

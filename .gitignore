@@ -1,0 +1,66 @@
+# Toplantı Yönetim Sistemi .gitignore
+
+# Hassas bilgiler
+php/config.local.php
+.env
+*.env
+
+# Log dosyaları
+*.log
+logs/
+php/error_log
+
+# Geçici dosyalar
+*.tmp
+*.temp
+*.cache
+cache/
+
+# IDE ve editör dosyaları
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS dosyaları
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Backup dosyaları
+*.bak
+*.backup
+*.sql.bak
+
+# Upload dosyaları (eğer gelecekte eklenirse)
+uploads/
+attachments/
+
+# Composer (eğer gelecekte eklenirse)
+vendor/
+composer.lock
+
+# Node modules (eğer gelecekte eklenirse)
+node_modules/
+package-lock.json
+
+# Build dosyaları
+dist/
+build/
+
+# Test dosyaları
+tests/coverage/
+.phpunit.result.cache
+
+# Veritabanı dump dosyaları
+*.sql
+!database/setup.sql
+
+# Güvenlik
+.htaccess.local
+robots.txt.local
+
+# Özel yapılandırma dosyaları
+config.local.php
+database.local.php

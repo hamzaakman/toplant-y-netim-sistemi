@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Veritabanı Test - Toplantı Yönetim Sistemi</title>
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .test-container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            margin: 20px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        }
+        .status-success { color: #28a745; font-weight: bold; }
+        .status-error { color: #dc3545; font-weight: bold; }
+        .status-warning { color: #ffc107; font-weight: bold; }
+        .table-info {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 15px 0;
+        }
+        .table-structure {
+            background: white;
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .column-list {
+            list-style: none;
+            padding: 0;
+        }
+        .column-list li {
+            padding: 8px 12px;
+            margin: 5px 0;
+            background: #f8f9fa;
+            border-radius: 4px;
+            border-left: 3px solid #667eea;
+        }
+        .setup-steps {
+            background: #e7f3ff;
+            border: 1px solid #b3d9ff;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        .setup-steps h3 {
+            color: #0056b3;
+            margin-top: 0;
+        }
+        .setup-steps ol {
+            margin: 15px 0;
+            padding-left: 20px;
+        }
+        .setup-steps li {
+            margin: 8px 0;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-database"></i> Veritabanı Test Sayfası</h1>
+            <nav class="main-nav">
+                <a href="index.html" class="nav-link"><i class="fas fa-plus"></i> Yeni Toplantı</a>
+                <a href="meetings.html" class="nav-link"><i class="fas fa-list"></i> Toplantı Listesi</a>
+                <a href="db_test.html" class="nav-link active"><i class="fas fa-database"></i> DB Test</a>
+            </nav>
+        </header>
+        
+        <main>
+            <div class="test-container">
+                <h2>🔍 Veritabanı Durumu Kontrolü</h2>
+                
+                <div class="status-warning">
+                    <h3>⚠️ PHP Sunucusu Çalışmıyor</h3>
+                    <p>Tarayıcıda PHP kodu görünüyorsa, PHP sunucusu çalışmıyor demektir.</p>
+                </div>
+                
+                <div class="table-info">
+                    <h3>📊 Beklenen Veritabanı Yapısı</h3>
+                    <p><strong>Veritabanı Adı:</strong> toplanti_yonetim_sistemi</p>
+                    <p><strong>Host:</strong> localhost</p>
+                    <p><strong>Kullanıcı:</strong> root</p>
+                    <p><strong>Şifre:</strong> (boş veya belirlediğiniz)</p>
+                </div>
+                
+                <div class="table-structure">
+                    <h3>📋 Gerekli Tablolar</h3>
+                    
+                    <h4>1. katilimcilar Tablosu</h4>
+                    <ul class="column-list">
+                        <li><strong>id</strong> - INT, Primary Key, Auto Increment</li>
+                        <li><strong>ad_soyad</strong> - VARCHAR(255), NOT NULL</li>
+                        <li><strong>email</strong> - VARCHAR(255), NOT NULL, UNIQUE</li>
+                        <li><strong>telefon</strong> - VARCHAR(20)</li>
+                        <li><strong>kayit_tarihi</strong> - TIMESTAMP, DEFAULT CURRENT_TIMESTAMP</li>
+                    </ul>
+                    
+                    <h4>2. toplantilar Tablosu</h4>
+                    <ul class="column-list">
+                        <li><strong>id</strong> - INT, Primary Key, Auto Increment</li>
+                        <li><strong>toplanti_adi</strong> - VARCHAR(255), NOT NULL</li>
+                        <li><strong>tarih</strong> - DATE, NOT NULL</li>
+                        <li><strong>saat</strong> - TIME, NOT NULL</li>
+                        <li><strong>yer</strong> - VARCHAR(255), NOT NULL</li>
+                        <li><strong>durum</strong> - ENUM('planlandi', 'devam_ediyor', 'tamamlandi', 'iptal_edildi')</li>
+                        <li><strong>aciklama</strong> - TEXT</li>
+                        <li><strong>olusturma_tarihi</strong> - TIMESTAMP, DEFAULT CURRENT_TIMESTAMP</li>
+                    </ul>
+                    
+                    <h4>3. toplanti_katilimcilari Tablosu</h4>
+                    <ul class="column-list">
+                        <li><strong>id</strong> - INT, Primary Key, Auto Increment</li>
+                        <li><strong>toplanti_id</strong> - INT, Foreign Key (toplantilar.id)</li>
+                        <li><strong>katilimci_id</strong> - INT, Foreign Key (katilimcilar.id)</li>
+                        <li><strong>katilim_durumu</strong> - ENUM('bekliyor', 'onaylandi', 'reddedi')</li>
+                        <li><strong>kayit_tarihi</strong> - TIMESTAMP, DEFAULT CURRENT_TIMESTAMP</li>
+                    </ul>
+                </div>
+                
+                <div class="setup-steps">
+                    <h3>🚀 PHP Kurulum Adımları</h3>
+                    <ol>
+                        <li><strong>PHP İndir:</strong> https://windows.php.net/download/ adresinden "VS16 x64 Thread Safe" ZIP'ini indir</li>
+                        <li><strong>Çıkart:</strong> ZIP'i C:\php klasörüne çıkart</li>
+                        <li><strong>Konfigürasyon:</strong> php.ini-development dosyasını php.ini olarak kopyala</li>
+                        <li><strong>PATH Ekle:</strong> Sistem PATH'ine C:\php ekle</li>
+                        <li><strong>Test Et:</strong> Terminal'de "php -v" komutunu çalıştır</li>
+                        <li><strong>Sunucu Başlat:</strong> Proje klasöründe "php -S localhost:8000" komutunu çalıştır</li>
+                    </ol>
+                </div>
+                
+                <div class="table-info">
+                    <h3>🔧 Alternatif Çözüm: XAMPP</h3>
+                    <p>PHP kurulumu karmaşık geliyorsa, XAMPP kullanabilirsiniz:</p>
+                    <ol>
+                        <li>https://www.apachefriends.org/ adresinden XAMPP indir</li>
+                        <li>Kurulum yap ve Apache + MySQL başlat</li>
+                        <li>Proje klasörünü C:\xampp\htdocs\ altına kopyala</li>
+                        <li>http://localhost/toplanti-yonetim-sistemi/ adresinden eriş</li>
+                    </ol>
+                </div>
+                
+                <div class="status-success">
+                    <h3>✅ Sonraki Adım</h3>
+                    <p>PHP kurulumu tamamlandıktan sonra:</p>
+                    <p><strong>Test Linki:</strong> http://localhost:8000/php/test_connection.php</p>
+                    <p>Bu link çalıştığında veritabanı bağlantısı ve tablo yapısı görünecek!</p>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>

@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toplantı Listesi - Toplantı Yönetim Sistemi</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="css/meetings.css">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1><i class="fas fa-calendar-alt"></i> Toplantı Yönetim Sistemi</h1>
+            <nav class="main-nav">
+                <a href="index.html" class="nav-link"><i class="fas fa-plus"></i> Yeni Toplantı</a>
+                <a href="meetings.html" class="nav-link active"><i class="fas fa-list"></i> Toplantı Listesi</a>
+                <a href="participants.html" class="nav-link"><i class="fas fa-users"></i> Katılımcılar</a>
+            </nav>
+        </header>
+        
+        <main>
+            <div class="meetings-container">
+                <div class="meetings-header">
+                    <h2>Toplantı Listesi</h2>
+                    <div class="meetings-actions">
+                        <button id="refreshBtn" class="btn-secondary">
+                            <i class="fas fa-sync-alt"></i> Yenile
+                        </button>
+                        <button id="addMeetingBtn" class="btn-primary" onclick="window.location.href='index.html'">
+                            <i class="fas fa-plus"></i> Yeni Toplantı
+                        </button>
+                    </div>
+                </div>
+                
+                <!-- Filtreler -->
+                <div class="filters-section">
+                    <div class="filter-group">
+                        <label for="statusFilter">Durum:</label>
+                        <select id="statusFilter">
+                            <option value="">Tümü</option>
+                            <option value="planlandi">Planlandı</option>
+                            <option value="devam_ediyor">Devam Ediyor</option>
+                            <option value="tamamlandi">Tamamlandı</option>
+                            <option value="iptal_edildi">İptal Edildi</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="dateFilter">Tarih:</label>
+                        <select id="dateFilter">
+                            <option value="">Tümü</option>
+                            <option value="today">Bugün</option>
+                            <option value="tomorrow">Yarın</option>
+                            <option value="this_week">Bu Hafta</option>
+                            <option value="this_month">Bu Ay</option>
+                        </select>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <label for="searchFilter">Arama:</label>
+                        <input type="text" id="searchFilter" placeholder="Toplantı adı veya yer...">
+                    </div>
+                </div>
+                
+                <!-- Toplantı Listesi -->
+                <div class="meetings-list" id="meetingsList">
+                    <!-- Toplantılar burada dinamik olarak yüklenecek -->
+                    <div class="loading-placeholder">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        <p>Toplantılar yükleniyor...</p>
+                    </div>
+                </div>
+                
+                <!-- Sayfalama -->
+                <div class="pagination" id="pagination">
+                    <!-- Sayfa numaraları burada görünecek -->
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <!-- Toplantı Detay Modal -->
+    <div id="meetingDetailModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 id="modalTitle">Toplantı Detayları</h3>
+                <span class="close" onclick="closeModal()">&times;</span>
+            </div>
+            <div class="modal-body" id="modalBody">
+                <!-- Toplantı detayları burada görünecek -->
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeModal()">Kapat</button>
+                <button class="btn-primary" id="editMeetingBtn">Düzenle</button>
+                <button class="btn-danger" id="deleteMeetingBtn">Sil</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toplantı Düzenleme Modal -->
+    <div id="editMeetingModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Toplantı Düzenle</h3>
+                <span class="close" onclick="closeEditModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <form id="editMeetingForm">
+                    <div class="form-group">
+                        <label for="editMeetingName">Toplantı Adı *</label>
+                        <input type="text" id="editMeetingName" name="meetingName" required>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="editMeetingDate">Tarih *</label>
+                            <input type="date" id="editMeetingDate" name="meetingDate" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="editMeetingTime">Saat *</label>
+                            <input type="time" id="editMeetingTime" name="meetingTime" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editMeetingLocation">Yer *</label>
+                        <input type="text" id="editMeetingLocation" name="meetingLocation" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editMeetingStatus">Durum</label>
+                        <select id="editMeetingStatus" name="status">
+                            <option value="planlandi">Planlandı</option>
+                            <option value="devam_ediyor">Devam Ediyor</option>
+                            <option value="tamamlandi">Tamamlandı</option>
+                            <option value="iptal_edildi">İptal Edildi</option>
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="editMeetingDescription">Açıklama</label>
+                        <textarea id="editMeetingDescription" name="description" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeEditModal()">Vazgeç</button>
+                <button class="btn-primary" onclick="saveMeetingChanges()">Kaydet</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Silme Onay Modal -->
+    <div id="deleteConfirmModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Toplantı Sil</h3>
+                <span class="close" onclick="closeDeleteModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <p>Bu toplantıyı silmek istediğinizden emin misiniz?</p>
+                <p><strong id="deleteMeetingName"></strong></p>
+                <p class="warning-text">Bu işlem geri alınamaz!</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="closeDeleteModal()">Vazgeç</button>
+                <button class="btn-danger" onclick="confirmDeleteMeeting()">Evet, Sil</button>
+            </div>
+        </div>
+    </div>
+    
+    <script src="js/meetings.js"></script>
+</body>
+</html>
