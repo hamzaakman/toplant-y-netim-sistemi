@@ -12,6 +12,9 @@ let currentFilters = {
 let currentMeetingId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Login kontrolü
+    checkLoginStatus();
+    
     // Event listeners
     document.getElementById('refreshBtn').addEventListener('click', loadMeetings);
     document.getElementById('statusFilter').addEventListener('change', applyFilters);
@@ -33,6 +36,9 @@ document.addEventListener('DOMContentLoaded', function() {
             showNotification('Toplantı listesi yenilendi', 'success');
         }, 1000);
     }
+    
+    // User menu event listeners
+    setupUserMenu();
 });
 
 // Toplantıları yükle
@@ -644,4 +650,80 @@ window.onclick = function(event) {
             modal.style.display = 'none';
         }
     });
+}
+
+// Login kontrolü
+async function checkLoginStatus() {
+    try {
+        const response = await fetch('php/check_login.php');
+        const result = await response.json();
+        
+        if (!result.data.loggedIn) {
+            // Kullanıcı giriş yapmamış, login sayfasına yönlendir
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        // Kullanıcı bilgilerini güncelle
+        updateUserInfo(result.user);
+        
+    } catch (error) {
+        console.error('Login durumu kontrol edilemedi:', error);
+        // Hata durumunda login sayfasına yönlendir
+        window.location.href = 'login.html';
+    }
+}
+
+// Kullanıcı bilgilerini güncelle
+function updateUserInfo(user) {
+    const usernameElement = document.getElementById('currentUsername');
+    const userMenuText = document.getElementById('userMenuText');
+    
+    if (usernameElement) usernameElement.textContent = user.username;
+    if (userMenuText) userMenuText.textContent = user.username;
+}
+
+// User menu ayarları
+function setupUserMenu() {
+    const userMenuBtn = document.getElementById('userMenuBtn');
+    const userDropdownMenu = document.getElementById('userDropdownMenu');
+    const logoutBtn = document.getElementById('logoutBtn');
+    
+    // User menu toggle
+    if (userMenuBtn && userDropdownMenu) {
+        userMenuBtn.addEventListener('click', function() {
+            userDropdownMenu.classList.toggle('show');
+        });
+    }
+    
+    // Dropdown dışına tıklandığında kapat
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.user-dropdown')) {
+            if (userDropdownMenu) {
+                userDropdownMenu.classList.remove('show');
+            }
+        }
+    });
+    
+    // Çıkış yap
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const response = await fetch('php/logout.php');
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Başarılı çıkış sonrası login sayfasına yönlendir
+                    window.location.href = 'login.html';
+                } else {
+                    showCustomNotification('Çıkış yapılırken bir hata oluştu', 'error');
+                }
+            } catch (error) {
+                console.error('Çıkış hatası:', error);
+                showCustomNotification('Çıkış yapılırken bir hata oluştu', 'error');
+            }
+        });
+    }
 }

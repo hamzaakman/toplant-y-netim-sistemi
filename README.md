@@ -39,6 +39,7 @@ source database/setup.sql
 `php/config.php` dosyasında veritabanı bilgilerini güncelleyin:
 ```php
 define('DB_HOST', 'localhost');
+define('DB_PORT', '3307');
 define('DB_NAME', 'toplanti_yonetim');
 define('DB_USER', 'your_username');
 define('DB_PASS', 'your_password');

@@ -23,6 +23,7 @@ header {
     text-align: center;
     margin-bottom: 30px;
     color: white;
+    position: relative;
 }
 
 header h1 {
@@ -34,6 +35,111 @@ header h1 {
 header h1 i {
     margin-right: 15px;
     color: #ffd700;
+}
+
+/* User Menu */
+.user-menu {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.welcome-text {
+    color: white;
+    font-size: 0.9rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+}
+
+.user-dropdown {
+    position: relative;
+}
+
+.user-btn {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    color: white;
+    padding: 8px 15px;
+    border-radius: 25px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    backdrop-filter: blur(10px);
+}
+
+.user-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    transform: translateY(-2px);
+}
+
+.user-dropdown-menu {
+    position: absolute;
+    top: 100%;
+    right: 0;
+    background: white;
+    border-radius: 10px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    min-width: 200px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    margin-top: 10px;
+}
+
+.user-dropdown-menu.show {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 15px;
+    color: #333;
+    text-decoration: none;
+    transition: background-color 0.2s ease;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background-color: #f8f9fa;
+}
+
+.dropdown-item i {
+    color: #667eea;
+    width: 16px;
+}
+
+.dropdown-divider {
+    height: 1px;
+    background-color: #e9ecef;
+    margin: 5px 0;
+}
+
+/* Responsive user menu */
+@media (max-width: 768px) {
+    .user-menu {
+        position: static;
+        justify-content: center;
+        margin-top: 20px;
+    }
+    
+    .welcome-text {
+        display: none;
+    }
 }
 
 /* Form Container */

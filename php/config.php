@@ -1,6 +1,7 @@
 <?php
 // Veritabanı bağlantı ayarları
 define('DB_HOST', 'localhost');
+define('DB_PORT', '3306');
 define('DB_NAME', 'toplanti_yonetim_sistemi');
 define('DB_USER', 'root');
 define('DB_PASS', '');
@@ -8,6 +9,9 @@ define('DB_PASS', '');
 // Hata raporlama
 error_reporting(E_ALL);
 ini_set('display_errors', 1);
+ini_set('display_startup_errors', 1);
+ini_set('log_errors', 1);
+ini_set('error_log', 'php_errors.log');
 
 // Zaman dilimi
 date_default_timezone_set('Europe/Istanbul');
@@ -16,7 +20,7 @@ date_default_timezone_set('Europe/Istanbul');
 function getDBConnection() {
     try {
         $pdo = new PDO(
-            "mysql:host=" . DB_HOST . ";dbname=" . DB_NAME . ";charset=utf8mb4",
+            "mysql:host=" . DB_HOST . ";port=" . DB_PORT . ";dbname=" . DB_NAME . ";charset=utf8mb4",
             DB_USER,
             DB_PASS,
             [
@@ -28,6 +32,7 @@ function getDBConnection() {
         return $pdo;
     } catch (PDOException $e) {
         error_log("Veritabanı bağlantı hatası: " . $e->getMessage());
+        error_log("Bağlantı detayları - Host: " . DB_HOST . ", Port: " . DB_PORT . ", DB: " . DB_NAME . ", User: " . DB_USER);
         return false;
     }
 }

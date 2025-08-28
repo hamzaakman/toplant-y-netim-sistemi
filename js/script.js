@@ -4,6 +4,9 @@ let newEmails = [];
 let existingParticipants = [];
 
 document.addEventListener('DOMContentLoaded', function() {
+    // Login kontrolü - GEÇİCİ OLARAK KAPALI
+    // checkLoginStatus();
+    
     // Event listeners
     document.getElementById('meetingForm').addEventListener('submit', handleFormSubmit);
     document.getElementById('newParticipantEmail').addEventListener('keypress', handleEmailKeypress);
@@ -16,6 +19,9 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Mevcut katılımcıları yükle
     loadExistingParticipants();
+    
+    // User menu event listeners
+    setupUserMenu();
 });
 
 // E-posta ekleme
@@ -374,4 +380,80 @@ function setupQuickEmailCards() {
             }, 150);
         });
     });
+}
+
+// Login kontrolü
+async function checkLoginStatus() {
+    try {
+        const response = await fetch('php/check_login.php');
+        const result = await response.json();
+        
+        if (!result.data.loggedIn) {
+            // Kullanıcı giriş yapmamış, login sayfasına yönlendir
+            window.location.href = 'login.html';
+            return;
+        }
+        
+        // Kullanıcı bilgilerini güncelle
+        updateUserInfo(result.data.user);
+        
+    } catch (error) {
+        console.error('Login durumu kontrol edilemedi:', error);
+        // Hata durumunda login sayfasına yönlendir
+        window.location.href = 'login.html';
+    }
+}
+
+// Kullanıcı bilgilerini güncelle
+function updateUserInfo(user) {
+    const usernameElement = document.getElementById('currentUsername');
+    const userMenuText = document.getElementById('userMenuText');
+    
+    if (usernameElement) usernameElement.textContent = user.username;
+    if (userMenuText) userMenuText.textContent = user.username;
+}
+
+// User menu ayarları
+function setupUserMenu() {
+    const userMenuBtn = document.getElementById('userMenuBtn');
+    const userDropdownMenu = document.getElementById('userDropdownMenu');
+    const logoutBtn = document.getElementById('logoutBtn');
+    
+    // User menu toggle
+    if (userMenuBtn && userDropdownMenu) {
+        userMenuBtn.addEventListener('click', function() {
+            userDropdownMenu.classList.toggle('show');
+        });
+    }
+    
+    // Dropdown dışına tıklandığında kapat
+    document.addEventListener('click', function(event) {
+        if (!event.target.closest('.user-dropdown')) {
+            if (userDropdownMenu) {
+                userDropdownMenu.classList.remove('show');
+            }
+        }
+    });
+    
+    // Çıkış yap
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const response = await fetch('php/logout.php');
+                const result = await response.json();
+                
+                if (result.success) {
+                    // Başarılı çıkış sonrası login sayfasına yönlendir
+                    window.location.href = 'login.html';
+                } else {
+                    showNotification('Çıkış yapılırken bir hata oluştu', 'error');
+                }
+            } catch (error) {
+                console.error('Çıkış hatası:', error);
+                showNotification('Çıkış yapılırken bir hata oluştu', 'error');
+            }
+        });
+    }
 }
