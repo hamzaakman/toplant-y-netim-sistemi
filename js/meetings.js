@@ -12,8 +12,8 @@ let currentFilters = {
 let currentMeetingId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Login kontrolü
-    checkLoginStatus();
+    // Login kontrolü - GEÇİCİ OLARAK KAPALI
+    // checkLoginStatus();
     
     // Event listeners
     document.getElementById('refreshBtn').addEventListener('click', loadMeetings);

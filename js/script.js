@@ -13,6 +13,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('addEmailBtn').addEventListener('click', addNewEmail);
     document.getElementById('addSelectedBtn').addEventListener('click', addSelectedParticipants);
     document.getElementById('existingParticipants').addEventListener('change', handleParticipantSelection);
+    document.getElementById('meetingLocation').addEventListener('change', handleLocationChange);
     
     // Hızlı e-posta kartlarını ayarla
     setupQuickEmailCards();
@@ -190,7 +191,32 @@ function displayExistingParticipants() {
 
 // Katılımcı seçimi handler
 function handleParticipantSelection(event) {
-    // Bu fonksiyon gerekirse eklenebilir
+    const selectedOptions = Array.from(document.getElementById('existingParticipants').selectedOptions);
+    const addButton = document.getElementById('addSelectedBtn');
+    
+    if (selectedOptions.length > 0) {
+        addButton.style.display = 'block';
+        addButton.textContent = `${selectedOptions.length} Katılımcıyı Ekle`;
+    } else {
+        addButton.style.display = 'none';
+    }
+}
+
+// Toplantı yeri değişikliği
+function handleLocationChange() {
+    const locationSelect = document.getElementById('meetingLocation');
+    const customLocationGroup = document.getElementById('customLocationGroup');
+    const customLocationInput = document.getElementById('customLocation');
+    
+    if (locationSelect.value === 'Diğer') {
+        customLocationGroup.style.display = 'block';
+        customLocationInput.required = true;
+        customLocationInput.focus();
+    } else {
+        customLocationGroup.style.display = 'none';
+        customLocationInput.required = false;
+        customLocationInput.value = '';
+    }
 }
 
 // Seçilen katılımcıları ekle
@@ -234,6 +260,20 @@ async function handleFormSubmit(event) {
     
     // Form verilerini topla
     const formData = new FormData(event.target);
+    
+    // Özel yer kontrolü
+    const locationSelect = document.getElementById('meetingLocation');
+    const customLocationInput = document.getElementById('customLocation');
+    
+    if (locationSelect.value === 'Diğer') {
+        if (!customLocationInput.value.trim()) {
+            showNotification('Lütfen özel yer adını girin', 'error');
+            customLocationInput.focus();
+            return;
+        }
+        // Özel yeri form data'ya ekle
+        formData.set('meetingLocation', customLocationInput.value.trim());
+    }
     
     // Seçili mevcut katılımcıları ekle
     const selectedParticipants = Array.from(document.getElementById('existingParticipants').selectedOptions)

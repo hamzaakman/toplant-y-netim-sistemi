@@ -12,8 +12,8 @@ let currentFilters = {
 let currentParticipantId = null;
 
 document.addEventListener('DOMContentLoaded', function() {
-    // Login kontrolü
-    checkLoginStatus();
+    // Login kontrolü - GEÇİCİ OLARAK KAPALI
+    // checkLoginStatus();
     
     // Event listeners
     document.getElementById('refreshBtn').addEventListener('click', loadParticipants);
